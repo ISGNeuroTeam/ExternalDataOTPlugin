@@ -1,6 +1,6 @@
 name := "ExternalDataOTPlugin"
 
-version := "0.0.2"
+version := "0.2.0"
 
 scalaVersion := "2.11.12"
 
