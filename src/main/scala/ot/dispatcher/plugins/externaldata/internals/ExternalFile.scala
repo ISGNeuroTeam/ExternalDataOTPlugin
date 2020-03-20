@@ -2,7 +2,7 @@ package ot.dispatcher.plugins.externaldata.internals
 
 import org.apache.spark.sql.DataFrame
 import ot.scalaspl.SimpleQuery
-import ot.scalaspl.commands.PluginCommand
+import ot.dispatcher.sdk.PluginCommand
 
 /** Provides arguments from SMaLL command for ReadFile and WriteFile.
  * @param sq [[SimpleQuery]] search query object.
