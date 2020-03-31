@@ -1,8 +1,8 @@
 package ot.dispatcher.plugins.externaldata.commands
 
 import org.apache.spark.sql.DataFrame
-import ot.scalaspl.{CustomException, SimpleQuery}
-import ot.dispatcher.sdk.PluginCommand
+import ot.dispatcher.sdk.core.SimpleQuery
+import ot.dispatcher.sdk.{PluginCommand, PluginUtils}
 
 /**
   * Gets table from SQL database.
@@ -47,10 +47,11 @@ import ot.dispatcher.sdk.PluginCommand
   *
   * @param sq SimpleQuery object with search information.
   */
-class SQLRead(sq: SimpleQuery) extends PluginCommand(sq) {
+class SQLRead(sq: SimpleQuery, utils: PluginUtils) extends PluginCommand(sq, utils) {
+  import utils._
 
-  override val requiredKeywords: Set[String] = Set("base", "host", "user", "password")
-  override val optionalKeywords: Set[String] = Set(
+  val requiredKeywords: Set[String] = Set("base", "host", "user", "password")
+  val optionalKeywords: Set[String] = Set(
     "fetchSize", "db", "query", "table",
     "partitionColumn", "lowerBound", "upperBound", "numPartitions"
   )
@@ -86,7 +87,7 @@ class SQLRead(sq: SimpleQuery) extends PluginCommand(sq) {
         val url = s"jdbc:oracle:thin:@$host:1521:XE"
         val driver = "oracle.jdbc.OracleDriver"
         (url, driver)
-      case _ => throw CustomException(3006, 0, "Unknown type of database.")
+      case _ => sendError("Unknown type of database.")
     }
 
     val table = spark.read.format("jdbc")
@@ -114,7 +115,7 @@ class SQLRead(sq: SimpleQuery) extends PluginCommand(sq) {
             table.option("upperBound", upperBound)
           case _ =>
         }
-      case (_, _) => throw CustomException(3005, 0, "Query and Table are empty.")
+      case (_, _) => sendError("Query and Table are empty.")
     }
 
 
