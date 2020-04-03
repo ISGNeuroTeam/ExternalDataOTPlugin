@@ -14,7 +14,7 @@ class ReadFile(sq: SimpleQuery, utils: PluginUtils) extends ExternalFile(sq, uti
 
   override def transform(_df: DataFrame): DataFrame = {
     val sparkSession = SparkSession.builder().getOrCreate()
-    val df = sparkSession.read.format(format).load(absolutePath)
+    val df = sparkSession.read.format(format).option("header", "true").load(absolutePath)
     df
   }
 

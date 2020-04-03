@@ -13,7 +13,7 @@ import ot.dispatcher.sdk.PluginUtils
 class WriteFile(sq: SimpleQuery, utils: PluginUtils) extends ExternalFile(sq, utils) {
 
   override def transform(_df: DataFrame): DataFrame = {
-    _df.write.format(format).mode(SaveMode.Overwrite).save(absolutePath)
+    _df.write.format(format).mode(SaveMode.Overwrite).option("header", "true").save(absolutePath)
     _df
   }
 
