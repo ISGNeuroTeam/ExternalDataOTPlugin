@@ -56,6 +56,14 @@ class SQLRead(sq: SimpleQuery, utils: PluginUtils) extends PluginCommand(sq, uti
     "partitionColumn", "lowerBound", "upperBound", "numPartitions"
   )
 
+  def queryParser(args: String): Option[String] = {
+    val query = """query\s*=\s*"(.+?)"""".r.findFirstMatchIn(args)
+    query match {
+      case Some(m) => Option(m.group(1))
+      case None => None
+    }
+  }
+
   override def transform(_df: DataFrame): DataFrame = {
 
     val base = getKeyword("base").get
@@ -66,8 +74,18 @@ class SQLRead(sq: SimpleQuery, utils: PluginUtils) extends PluginCommand(sq, uti
     val fetchSize = getKeyword("fetchSize").getOrElse("100000").toInt
 
     val dbName = getKeyword("db")
-    val query = getKeyword("query")
+    val query = queryParser(args)
     val dbTable = getKeyword("table")
+
+    log.debug(s"Base: $base.")
+    log.debug(s"host: $host.")
+    log.debug(s"user: $user.")
+    log.debug(s"password: $password.")
+    log.debug(s"fetchSize: $fetchSize.")
+    log.debug(s"dbName: $dbName.")
+    log.debug(s"query: $query.")
+    log.debug(s"dbTable: $dbTable.")
+
 
     val dbname = dbName match {
       case Some(name) => name
@@ -96,6 +114,8 @@ class SQLRead(sq: SimpleQuery, utils: PluginUtils) extends PluginCommand(sq, uti
       .option("user", user)
       .option("password", password)
       .option("fetchsize", fetchSize)
+
+    log.debug(s"Query: $query.")
 
     (query, dbTable) match {
       case (Some(q), _) =>
