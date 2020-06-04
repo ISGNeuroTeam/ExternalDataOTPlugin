@@ -3,6 +3,7 @@ package ot.dispatcher.plugins.externaldata
 import java.io.File
 import java.nio.file.{Path, Paths}
 
+import org.apache.spark.sql.DataFrame
 import ot.dispatcher.plugins.externaldata.commands.ReadFile
 import ot.dispatcher.sdk.core.SimpleQuery
 import ot.dispatcher.sdk.test.CommandTest
@@ -12,6 +13,8 @@ class ReadFileTest extends CommandTest {
       |{"a":"1","b":"2"},
       |{"a":"10","b":"20"}
       |]""".stripMargin
+
+  val initialDf: DataFrame = jsonToDf(dataset)
 
   test("Test 0. Command: | readFile parquet") {
     initialDf.show()
