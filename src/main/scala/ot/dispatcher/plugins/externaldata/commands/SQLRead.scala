@@ -1,8 +1,8 @@
 package ot.dispatcher.plugins.externaldata.commands
 
 import org.apache.spark.sql.DataFrame
-import ot.scalaspl.{CustomException, SimpleQuery}
-import ot.dispatcher.sdk.PluginCommand
+import ot.dispatcher.sdk.core.SimpleQuery
+import ot.dispatcher.sdk.{PluginCommand, PluginUtils}
 
 /**
   * Gets table from SQL database.
@@ -47,13 +47,22 @@ import ot.dispatcher.sdk.PluginCommand
   *
   * @param sq SimpleQuery object with search information.
   */
-class SQLRead(sq: SimpleQuery) extends PluginCommand(sq) {
+class SQLRead(sq: SimpleQuery, utils: PluginUtils) extends PluginCommand(sq, utils) {
+  import utils._
 
-  override val requiredKeywords: Set[String] = Set("base", "host", "user", "password")
-  override val optionalKeywords: Set[String] = Set(
+  val requiredKeywords: Set[String] = Set("base", "host", "user", "password")
+  val optionalKeywords: Set[String] = Set(
     "fetchSize", "db", "query", "table",
     "partitionColumn", "lowerBound", "upperBound", "numPartitions"
   )
+
+  def queryParser(args: String): Option[String] = {
+    val query = """query\s*=\s*"(.+?)"""".r.findFirstMatchIn(args)
+    query match {
+      case Some(m) => Option(m.group(1))
+      case None => None
+    }
+  }
 
   override def transform(_df: DataFrame): DataFrame = {
 
@@ -65,8 +74,18 @@ class SQLRead(sq: SimpleQuery) extends PluginCommand(sq) {
     val fetchSize = getKeyword("fetchSize").getOrElse("100000").toInt
 
     val dbName = getKeyword("db")
-    val query = getKeyword("query")
+    val query = queryParser(args)
     val dbTable = getKeyword("table")
+
+    log.debug(s"Base: $base.")
+    log.debug(s"host: $host.")
+    log.debug(s"user: $user.")
+    log.debug(s"password: $password.")
+    log.debug(s"fetchSize: $fetchSize.")
+    log.debug(s"dbName: $dbName.")
+    log.debug(s"query: $query.")
+    log.debug(s"dbTable: $dbTable.")
+
 
     val dbname = dbName match {
       case Some(name) => name
@@ -86,7 +105,7 @@ class SQLRead(sq: SimpleQuery) extends PluginCommand(sq) {
         val url = s"jdbc:oracle:thin:@$host:1521:XE"
         val driver = "oracle.jdbc.OracleDriver"
         (url, driver)
-      case _ => throw CustomException(3006, 0, "Unknown type of database.")
+      case _ => sendError("Unknown type of database.")
     }
 
     val table = spark.read.format("jdbc")
@@ -95,6 +114,8 @@ class SQLRead(sq: SimpleQuery) extends PluginCommand(sq) {
       .option("user", user)
       .option("password", password)
       .option("fetchsize", fetchSize)
+
+    log.debug(s"Query: $query.")
 
     (query, dbTable) match {
       case (Some(q), _) =>
@@ -114,7 +135,7 @@ class SQLRead(sq: SimpleQuery) extends PluginCommand(sq) {
             table.option("upperBound", upperBound)
           case _ =>
         }
-      case (_, _) => throw CustomException(3005, 0, "Query and Table are empty.")
+      case (_, _) => sendError("Query and Table are empty.")
     }
 
 
