@@ -34,4 +34,20 @@ class SqlReadTest extends CommandTest {
     assert(jsonCompare(actual, expected), f"Result : $actual\n---\nExpected : $expected")
   }
 
+  test("Read from url.") {
+    val simpleQuery = SimpleQuery(""" base=mssql url='jdbc:sqlserver://localhost:1433;databaseName=test' user=sa password=aaa table=bbb """)
+    val commandSQLRead = new SQLRead(simpleQuery, utils)
+    val actual = execute(commandSQLRead)
+    val expected = dataset
+    assert(jsonCompare(actual, expected), f"Result : $actual\n---\nExpected : $expected")
+  }
+
+  test("Read query from url.") {
+    val simpleQuery = SimpleQuery(""" base=mssql url='jdbc:sqlserver://localhost:1433;databaseName=test' user=sa password=aaa query='SELECT 1 as field' """)
+    val commandSQLRead = new SQLRead(simpleQuery, utils)
+    val actual = execute(commandSQLRead)
+    val expected = dataset
+    assert(jsonCompare(actual, expected), f"Result : $actual\n---\nExpected : $expected")
+  }
+
 }
