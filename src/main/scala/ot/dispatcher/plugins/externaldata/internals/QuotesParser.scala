@@ -11,7 +11,7 @@ import ot.dispatcher.sdk.{PluginCommand, PluginUtils}
  */
 abstract class QuotesParser(sq: SimpleQuery, utils: PluginUtils) extends PluginCommand(sq, utils) {
   override def keywordsParser= (args: String) => {
-    """([^'"\s]*)\s*=((?:(?:'|")[^'"]*(?:'|"))|(?:\s*(?:[^'"=\s]+)))""".r.findAllIn(args)
+    """([^'"\s]*)\s*=((?:(?:'|")(?:[^'"]*)(?:'|"))|(?:\s*(?:[^'"=\s]+)))""".r.findAllIn(args)
       .matchData
       .map(x =>
         Keyword(
