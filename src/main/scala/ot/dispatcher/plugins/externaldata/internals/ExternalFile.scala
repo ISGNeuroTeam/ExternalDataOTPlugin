@@ -10,10 +10,10 @@ import ot.dispatcher.sdk.{PluginCommand, PluginUtils}
  * @param sq [[SimpleQuery]] search query object.
  * @author Andrey Starchenkov (astarchenkov@ot.ru)
  */
-class ExternalFile(sq: SimpleQuery, utils: PluginUtils) extends PluginCommand(sq, utils) {
+class ExternalFile(sq: SimpleQuery, utils: PluginUtils) extends QuotesParser(sq, utils) {
 
   val format: String = getKeyword("format").get
-  val path: String = getKeyword("path").get.replace("../","")
+  val path: String = getKeyword("path").get.replace("../","").replace("'", "").replace("\"", "")
   val fs: String = pluginConfig.getString("storage.fs")
   val basePath: String = pluginConfig.getString("storage.path")
   val absolutePath: String = fs + new File(basePath,path).getAbsolutePath

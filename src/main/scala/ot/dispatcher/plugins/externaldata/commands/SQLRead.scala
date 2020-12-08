@@ -1,6 +1,7 @@
 package ot.dispatcher.plugins.externaldata.commands
 
 import org.apache.spark.sql.DataFrame
+import ot.dispatcher.plugins.externaldata.internals.QuotesParser
 import ot.dispatcher.sdk.core.SimpleQuery
 import ot.dispatcher.sdk.{PluginCommand, PluginUtils}
 
@@ -47,13 +48,13 @@ import ot.dispatcher.sdk.{PluginCommand, PluginUtils}
   *
   * @param sq SimpleQuery object with search information.
   */
-class SQLRead(sq: SimpleQuery, utils: PluginUtils) extends PluginCommand(sq, utils) {
+class SQLRead(sq: SimpleQuery, utils: PluginUtils) extends QuotesParser(sq, utils) {
   import utils._
 
   val requiredKeywords: Set[String] = Set("base", "host", "user", "password")
   val optionalKeywords: Set[String] = Set(
     "fetchSize", "db", "query", "table",
-    "partitionColumn", "lowerBound", "upperBound", "numPartitions"
+    "partitionColumn", "lowerBound", "upperBound", "numPartitions", "url"
   )
 
   def queryParser(args: String): Option[String] = {
@@ -76,6 +77,7 @@ class SQLRead(sq: SimpleQuery, utils: PluginUtils) extends PluginCommand(sq, uti
     val dbName = getKeyword("db")
     val query = queryParser(args)
     val dbTable = getKeyword("table")
+    val uri = getKeyword("url")
 
     log.debug(s"Base: $base.")
     log.debug(s"host: $host.")
@@ -92,20 +94,40 @@ class SQLRead(sq: SimpleQuery, utils: PluginUtils) extends PluginCommand(sq, uti
       case None => None
     }
 
-    val (url: String, driver: String) = base match {
+    val url: String = uri match {
+      case Some(name) => name
+      case None => ""
+    }
+
+    val driver: String = base match {
       case "postgres" =>
-        val url = s"jdbc:postgresql://$host/$dbname"
         val driver = "org.postgresql.Driver"
-        (url, driver)
+        driver
       case "mssql" =>
-        val url = s"jdbc:sqlserver://$host;databaseName=$dbname"
         val driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-        (url, driver)
+        driver
       case "oracle" =>
-        val url = s"jdbc:oracle:thin:@$host:1521:XE"
         val driver = "oracle.jdbc.OracleDriver"
-        (url, driver)
+        driver
       case _ => sendError("Unknown type of database.")
+    }
+
+    if (url == "") {
+      val (url: String, driver: String) = base match {
+        case "postgres" =>
+          val url = s"jdbc:postgresql://$host/$dbname"
+          val driver = "org.postgresql.Driver"
+          (url, driver)
+        case "mssql" =>
+          val url = s"jdbc:sqlserver://$host;databaseName=$dbname"
+          val driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+          (url, driver)
+        case "oracle" =>
+          val url = s"jdbc:oracle:thin:@$host:1521:XE"
+          val driver = "oracle.jdbc.OracleDriver"
+          (url, driver)
+        case _ => sendError("Unknown type of database.")
+      }
     }
 
     val table = spark.read.format("jdbc")
