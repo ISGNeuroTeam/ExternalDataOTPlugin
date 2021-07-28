@@ -12,9 +12,22 @@ import ot.dispatcher.sdk.PluginUtils
  */
 class WriteFile(sq: SimpleQuery, utils: PluginUtils) extends ExternalFile(sq, utils) {
 
-  override def transform(_df: DataFrame): DataFrame = {
-    _df.write.format(format).mode(SaveMode.Overwrite).option("header", "true").save(absolutePath)
-    _df
+  private val mode = getKeyword("mode") match {
+    case Some("append") => SaveMode.Append
+    case Some("overwrite") => SaveMode.Overwrite
+    case Some(_) => sendError("Specified save mode is not supported")
+    case _ => SaveMode.Overwrite
   }
 
+  private val partitionBy = getKeyword("partition")
+
+  override def transform(_df: DataFrame): DataFrame = {
+    val dfw = _df.write.format(format).mode(mode).option("header", "true")
+    partitionBy match {
+      case Some(partition) if _df.columns.contains(partition) => dfw.partitionBy(partition).save(absolutePath)
+      case Some(partition) => sendError(s"Dataframe does not contain the '$partition' column")
+      case _ => dfw.save(absolutePath)
+    }
+    _df
+  }
 }
