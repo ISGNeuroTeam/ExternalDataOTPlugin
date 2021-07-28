@@ -12,6 +12,12 @@ class WriteFileTest extends CommandTest {
       |{"a":"10","b":"20"}
       |]""".stripMargin
 
+  val dataset3cols: String = """[
+       |{"a":"1","b":"2","c":"3"},
+       |{"a":"10","b":"2","c":"30"},
+       |{"a":"10","b":"20","c":"300"}
+       |]""".stripMargin
+
   test("Test 0. Command: | writeFile parquet") {
     val path = new File("src/test/resources/temp/write_test_file_parquet").getAbsolutePath
     val simpleQuery = SimpleQuery(""" format=parquet path=write_test_file_parquet """)
@@ -42,5 +48,26 @@ class WriteFileTest extends CommandTest {
     assert(jsonCompare(actual, expected), f"Result : $actual\n---\nExpected : $expected")
   }
 
+  test("Test 3. Command: | writeFile parquet + partitionBy") {
+    val path = new File("src/test/resources/temp/write_test_file_parquet").getAbsolutePath
+    val simpleQuery = SimpleQuery(""" partitionBy=a path=write_test_file_parquet """)
+    val commandWriteFile = new WriteFile(simpleQuery, utils)
+    execute(commandWriteFile)
+    val expected = jsonToDf(dataset)
+    val actualDF = spark.read.format("parquet").load(path).select("a", "b").sort("a")
+    assert(actualDF.rdd.getNumPartitions == 2)
+    assert(actualDF.except(expected).count() == 0)
+  }
+
+  test("Test 4. Command: | writeFile parquet + partitionBy on multiple columns") {
+    val path = new File("src/test/resources/temp/write_test_file_parquet").getAbsolutePath
+    val simpleQuery = SimpleQuery(""" partitionBy=a,b path=write_test_file_parquet """)
+    val commandWriteFile = new WriteFile(simpleQuery, utils)
+    execute(jsonToDf(dataset3cols), commandWriteFile)
+    val expected = jsonToDf(dataset3cols)
+    val actualDF = spark.read.format("parquet").load(path).select("a", "b", "c").sort("a")
+    assert(actualDF.rdd.getNumPartitions == 3)
+    assert(actualDF.except(expected).count() == 0)
+  }
 }
 

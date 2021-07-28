@@ -7,6 +7,9 @@ import ot.dispatcher.sdk.PluginUtils
 
 /**
  * SMaLL command. It writes any file of compatible with Spark format.
+ *
+ * Example: | writeFile format=parquet partitionBy=col1,col2 mode=append
+ *
  * @param sq [[SimpleQuery]] search query object.
  * @return [[DataFrame]]
  */
@@ -19,7 +22,7 @@ class WriteFile(sq: SimpleQuery, utils: PluginUtils) extends ExternalFile(sq, ut
     case _ => SaveMode.Overwrite
   }
 
-  private val partitionBy = getKeyword("partition").map(_.split(",").map(_.trim))
+  private val partitionBy = getKeyword("partitionBy").map(_.split(",").map(_.trim))
 
   override def transform(_df: DataFrame): DataFrame = {
     val dfw = _df.write.format(format).mode(mode).option("header", "true")
