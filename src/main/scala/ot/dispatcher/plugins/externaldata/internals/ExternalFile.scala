@@ -12,7 +12,7 @@ import ot.dispatcher.sdk.{PluginCommand, PluginUtils}
  */
 class ExternalFile(sq: SimpleQuery, utils: PluginUtils) extends PluginCommand(sq, utils) {
 
-  val format: String = getKeyword("format").get
+  val format: String = getKeyword("format").getOrElse("parquet")
   val path: String = getKeyword("path").get.replace("../","")
   val fs: String = pluginConfig.getString("storage.fs")
   val basePath: String = pluginConfig.getString("storage.path")
