@@ -19,13 +19,16 @@ class WriteFile(sq: SimpleQuery, utils: PluginUtils) extends ExternalFile(sq, ut
     case _ => SaveMode.Overwrite
   }
 
-  private val partitionBy = getKeyword("partition")
+  private val partitionBy = getKeyword("partition").map(_.split(",").map(_.trim))
 
   override def transform(_df: DataFrame): DataFrame = {
     val dfw = _df.write.format(format).mode(mode).option("header", "true")
     partitionBy match {
-      case Some(partition) if _df.columns.contains(partition) => dfw.partitionBy(partition).save(absolutePath)
-      case Some(partition) => sendError(s"Dataframe does not contain the '$partition' column")
+      case Some(partitions) if partitions.forall(_df.columns.contains) => dfw.partitionBy(partitions: _*).save(absolutePath)
+      case Some(partitions) => {
+        val missedCols = partitions.filterNot(_df.columns.contains)
+        sendError(s"Missed columns: '${missedCols.mkString(", ")}")
+      }
       case _ => dfw.save(absolutePath)
     }
     _df
