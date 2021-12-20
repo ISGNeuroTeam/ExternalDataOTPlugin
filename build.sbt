@@ -1,11 +1,11 @@
 name := "ExternalDataOTPlugin"
 
-version := "1.0.2"
+version := "2.0.0"
 
-scalaVersion := "2.11.12"
+scalaVersion := "2.12.10"
 
 resolvers += Resolver.jcenterRepo
 
-libraryDependencies += "ot.dispatcher" % "dispatcher-sdk_2.11" % "1.2.0"  % Compile
+libraryDependencies += "ot.dispatcher" % "dispatcher-sdk_2.12" % "2.0.0"  % Compile
 
-parallelExecution in Test := false
+Test /parallelExecution := false
