@@ -1,3 +1,8 @@
+# [1.0.3] - Repository improvements
+### Changed
+- plugin.conf.example.
+- README.md.
+
 # [1.0.2] - Updating dependency
 
 ### New
